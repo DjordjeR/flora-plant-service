@@ -1,3 +1,5 @@
+from fastapi.param_functions import Depends
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,3 +25,7 @@ app = get_application()
 
 app.include_router(example.router)
 app.include_router(user.router)
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, port=8080, loop="asyncio")
