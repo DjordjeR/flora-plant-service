@@ -1,2 +1,5 @@
 fastapi==0.65.1
 uvicorn[standard]==0.14.0
+fastapi-sqlalchemy 
+pydantic
+alembic

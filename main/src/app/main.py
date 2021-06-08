@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from .routers import example, user
+from .routers import example, user, search, plant
 
 
 def get_application():
@@ -18,14 +18,15 @@ def get_application():
         allow_headers=["*"],
     )
 
+    _app.include_router(example.router)
+    _app.include_router(plant.router)
+    _app.include_router(user.router)
+    _app.include_router(search.router)
+
     return _app
 
 
 app = get_application()
-
-app.include_router(example.router)
-app.include_router(user.router)
-
 
 if __name__ == "__main__":
     uvicorn.run(app, port=8080, loop="asyncio")

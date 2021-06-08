@@ -52,7 +52,7 @@ services:
             - 5432:5432
 
     meilisearch:
-        image: getmeili/meilisearch
+        image: getmeili/meilisearch:v0.20.0
         command: ./meilisearch --master-key=masterKey --no-analytics=true
         volumes: 
             - search_data:/data.ms
