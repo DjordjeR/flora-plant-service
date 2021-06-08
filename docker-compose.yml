@@ -1,0 +1,52 @@
+version: "3"
+
+volumes:
+    # Databases data
+    main_db_data:
+    search_db_data:
+    scraper_db_data:
+    keycloack_db_data:
+    # Services Data
+    main_db_data:
+    main_data:
+    scraper_data:
+
+
+services:
+    keycloack_pg:
+        image: postgres:13-alpine
+        restart: unless-stopped
+        volumes:
+            - keycloack_db_data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: keycloak
+            POSTGRES_USER: keycloak
+            POSTGRES_PASSWORD: password
+    keycloak:
+        image: quay.io/keycloak/keycloak:13.0.1
+        restart: unless-stopped
+        environment:
+            DB_VENDOR: POSTGRES
+            DB_ADDR: keycloack_pg
+            DB_DATABASE: keycloak
+            DB_USER: keycloak
+            DB_SCHEMA: public
+            DB_PASSWORD: password
+            KEYCLOAK_USER: admin
+            KEYCLOAK_PASSWORD: Pa55w0rd
+        ports:
+            - 8081:8080
+        depends_on:
+            - keycloack_pg
+
+    flora_pg:
+        image: postgres:13-alpine
+        restart: unless-stopped
+        volumes:
+            - main_db_data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: flora
+            POSTGRES_USER: flora
+            POSTGRES_PASSWORD: password
+        ports: 
+            - 5432:5432
