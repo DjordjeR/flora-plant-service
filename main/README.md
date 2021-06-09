@@ -1,7 +1,8 @@
 # main_service
 
-This project was generated via [manage-fastapi](https://ycd.github.io/manage-fastapi/)! :tada:
+## Run
 
-## License
-
-This project is licensed under the terms of the MIT license.
+```shell
+cd src
+uvicorn app.main:app --reload
+```

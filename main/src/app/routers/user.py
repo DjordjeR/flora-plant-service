@@ -1,12 +1,13 @@
 from fastapi import APIRouter
-from ..models import user
+from ..schema import user
 
 
 router = APIRouter()
 
 # TODO: Nikola make this work
 # Follow swagger api definition see register as example.
-# Connect to keycloack and setup keycloack 
+# Connect to keycloack and setup keycloack
+
 
 @router.post("/user/login", tags=["user"])
 async def user_login():
