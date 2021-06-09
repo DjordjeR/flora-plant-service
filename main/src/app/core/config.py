@@ -1,8 +1,6 @@
-
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
-
 
 
 class Settings(BaseSettings):
@@ -22,18 +20,31 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     DATABASE_URI: Optional[PostgresDsn] = None
+    TORTOISE_ORM: Optional[dict] = None
 
     @validator("DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(v, str):
             return v
         return PostgresDsn.build(
-            scheme="postgresql",
+            scheme="postgres",
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
             host=values.get("POSTGRES_SERVER"),
             path=f"/{values.get('POSTGRES_DB') or ''}",
         )
+
+    @validator("TORTOISE_ORM", pre=True)
+    def assemble_tortoise(cls, v: Optional[str], values: Dict[str, Any]) -> dict:
+        return {
+            "connections": {"default": cls.assemble_db_connection(v, values)},
+            "apps": {
+                "models": {
+                    "models": ["app.models.plant", "aerich.models"],
+                    "default_connection": "default",
+                },
+            },
+        }
 
     class Config:
         case_sensitive = True

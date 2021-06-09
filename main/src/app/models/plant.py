@@ -1,11 +1,10 @@
-from sqlalchemy import Column, Integer, String, JSON
-from ..database import Base
+from enum import unique
+from tortoise import fields
+from tortoise.models import Model
 
 
-class Plant(Base):
-    __tablename__ = "plants"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    common_name = Column(String, nullable=False)
-    latin_name = Column(String, nullable=False)
-    metadata = Column(JSON, nullable=True)
+class Plant(Model):
+    id = fields.IntField(pk=True)
+    common_name = fields.CharField(50, unique=True)
+    latin_name = fields.CharField(50, unique=True)
+    metadata = fields.JSONField(null=True)
