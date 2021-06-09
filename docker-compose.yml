@@ -3,7 +3,7 @@ version: "3"
 volumes:
     # Databases data
     main_db_data:
-    scraper_data:
+    scraper_db_data:
     keycloack_db_data:
     # Services Data
     main_db_data:
@@ -13,7 +13,7 @@ volumes:
 
 
 services:
-    keycloack_pg:
+    keycloack_db:
         image: postgres:13-alpine
         restart: unless-stopped
         volumes:
@@ -27,7 +27,7 @@ services:
         restart: unless-stopped
         environment:
             DB_VENDOR: POSTGRES
-            DB_ADDR: keycloack_pg
+            DB_ADDR: keycloack_db
             DB_DATABASE: keycloak
             DB_USER: keycloak
             DB_SCHEMA: public
@@ -37,9 +37,9 @@ services:
         ports:
             - 8081:8080
         depends_on:
-            - keycloack_pg
+            - keycloack_db
 
-    flora_pg:
+    flora_db:
         image: postgres:13-alpine
         restart: unless-stopped
         volumes:
@@ -50,6 +50,18 @@ services:
             POSTGRES_PASSWORD: password
         ports: 
             - 5432:5432
+
+    scraper_db:
+        image: postgres:13-alpine
+        restart: unless-stopped
+        volumes:
+            - scraper_db_data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: scraper
+            POSTGRES_USER: scraper
+            POSTGRES_PASSWORD: password
+        ports: 
+            - 5431:5432
 
     meilisearch:
         image: getmeili/meilisearch:v0.20.0

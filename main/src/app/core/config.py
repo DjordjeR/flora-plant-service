@@ -40,7 +40,7 @@ class Settings(BaseSettings):
             "connections": {"default": cls.assemble_db_connection(v, values)},
             "apps": {
                 "models": {
-                    "models": ["app.models.plant", "aerich.models"],
+                    "models": ["app.models.plant"],
                     "default_connection": "default",
                 },
             },

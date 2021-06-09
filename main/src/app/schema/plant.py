@@ -14,7 +14,7 @@ async def create_plant(plant_in: PlantIn_Pydantic) -> PlantOut_Pydantic:
     return await PlantOut_Pydantic.from_tortoise_orm(plant_obj)
 
 
-async def get_plant(plant_name: str) -> PlantOut_Pydantic:
+async def get_plant(plant_name: str) -> PlantOut_Pydantic:    
     return await plant.Plant.get(common_name=plant_name)
 
 
