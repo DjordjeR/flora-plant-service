@@ -26,4 +26,6 @@ def get_application():
 
 app = get_application()
 
-
+@app.get('/')
+def test():
+    return {'a': 'b'}
