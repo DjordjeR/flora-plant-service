@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic.errors import BytesError
 from pydantic.types import UUID4
 
 
@@ -10,6 +11,14 @@ class UserLoginResponse(BaseModel):
     token_type: str
     session_state: str
     scope: str
+
+
+class UserLoggedIn(BaseModel):
+    sub: UUID4
+    email_verified: bool
+    name: str
+    preferred_username: str
+    email: str
 
 
 class UserLoginRequest(BaseModel):
