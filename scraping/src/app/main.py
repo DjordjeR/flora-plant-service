@@ -1,7 +1,11 @@
-from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
-from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from tortoise.contrib.fastapi import register_tortoise
+
+from app.core.config import settings
+
+from .schema.job import JobResponseDetailed, JobResponseSimple
+from .schema.scrape import ScrapeRequest, ScrapeResponse
 
 
 def get_application():
@@ -26,6 +30,22 @@ def get_application():
 
 app = get_application()
 
-@app.get('/')
+
+@app.post("/scrape", tags=["scraper"], response_model=ScrapeResponse)
+async def scrape(scrape_req: ScrapeRequest):
+    raise NotImplemented
+
+
+@app.get("/job/{job_id}", tags=["jobs"], response_model=JobResponseSimple)
+async def job_simple(job_id: str):
+    raise NotImplemented
+
+
+@app.get("/job/{job_id}/details", tags=["jobs"], response_model=JobResponseDetailed)
+async def job_details(job_id: str):
+    raise NotImplemented
+
+
+@app.get("/")
 def test():
-    return {'a': 'b'}
+    return {"a": "b"}
