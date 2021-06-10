@@ -1,10 +1,20 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.param_functions import Depends
 from tortoise.contrib.fastapi import register_tortoise
 
 from app.core.config import settings
-from .routers import example, user, search, plant
+
+from .authentication import auth_router, get_current_user
+from .routers import example, plant, search
+
+
+def _get_deps():
+    if settings.AUTH_ON:
+        return [Depends(get_current_user)]
+    else:
+        []
 
 
 def get_application():
@@ -18,9 +28,8 @@ def get_application():
         allow_headers=["*"],
     )
 
-    _app.include_router(example.router)
-    _app.include_router(plant.router)
-    _app.include_router(user.router)
+    _app.include_router(plant.router, dependencies=_get_deps())
+    _app.include_router(auth_router)
     _app.include_router(search.router)
     register_tortoise(
         _app,

@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     DATABASE_URI: Optional[PostgresDsn] = None
     TORTOISE_ORM: Optional[dict] = None
 
+    # KEYCLOAK
+    KEYCLOAK_URL: str
+    KEYCLOAK_CLIENT_ID: str
+    KEYCLOAK_REALM_NAME: str
+    KEYCLOAK_ADMIN_USER: str
+    KEYCLOAK_ADMIN_PASSWORD: str
+
+    # Custom
+    AUTH_ON: bool
+
     @validator("DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(v, str):
