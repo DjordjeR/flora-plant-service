@@ -1,12 +1,31 @@
 from pydantic import BaseModel
+from pydantic.types import UUID4
 
-USERS = list()
-# TODO: Nikola chnage this if/as needed
+
+class UserLoginResponse(BaseModel):
+    access_token: str
+    expires_in: int
+    refresh_expires_in: int
+    refresh_token: str
+    token_type: str
+    session_state: str
+    scope: str
+
+
+class UserLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UserKeycloackDetail(BaseModel):
+    detail: str
+
 
 class UserBase(BaseModel):
     username: str
     firstName: str
     lastName: str
+    email: str
 
 
 class UserIn(UserBase):
@@ -14,15 +33,4 @@ class UserIn(UserBase):
 
 
 class UserOut(UserBase):
-    id: int
-
-class UserDb(UserBase):
-    id: int
-    password: str
-
-
-# Fake register user, remove me when not needed
-async def register_user(user_in: UserIn) -> UserDb:
-    user_saved = UserDb(id=len(USERS), **user_in.dict())
-    USERS.append(user_saved)
-    return user_saved
+    id: UUID4
