@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from pydantic.errors import BytesError
 from pydantic.types import UUID4
 
 

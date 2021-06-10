@@ -25,5 +25,5 @@ async def create_plant(plant_in: plant.PlantIn_Pydantic):
 @router.put(
     "/plant/{plant_name}", tags=["plant"], response_model=plant.PlantOut_Pydantic
 )
-async def update_plant(plant_name: str, plant_in: plant.PlantIn_Pydantic):
-    return {"message": "Hello world!"}
+async def update_plant(plant_name: str, plant_in: plant.Plant_Update_Pydantic):
+    return await plant.update_plant(plant_name, plant_in)
