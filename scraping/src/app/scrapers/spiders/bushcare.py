@@ -9,7 +9,6 @@ class BushcareSpider(scrapy.Spider):
     start_urls = ['https://roleybushcare.com.au/plants_database/plantmanager.php?organisation_name=roleybushcare']
 
     def parse(self, response):
-        self.log('SPARTA'*100)
         data = response.selector.css('div[class="col-sm-6"]').getall()
         data = [x for x in data if any(y in x for y in ['Botanical', 'botanical', 'comments'])]
         
@@ -24,8 +23,7 @@ class BushcareSpider(scrapy.Spider):
             plant_info = plant_info[:-3]
             plant_info.append(plant_info.pop(0)) #move family to back
 
-            #TODO: rewrite
-            plant_data = PlantItem( latin_name=[plant_info[0][1], plant_info[1][1]],
-                                    common_name=plant_info[2][1],
-                                    additional=plant_info[3:])
+            plant_data = PlantItem( latin_name=serialize_latin_name([plant_info[0][1], plant_info[1][1]]),
+                                    common_names=serialize_common_names(plant_info[2][1]),
+                                    additional=serialize_additional(plant_info[3:]))
             self.plants.append(plant_data)

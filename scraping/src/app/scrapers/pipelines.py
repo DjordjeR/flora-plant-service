@@ -8,9 +8,12 @@
 from itemadapter import ItemAdapter
 from scrapy.exporters import JsonItemExporter
 from ..models.plant_scraped import ScrapedPlant
+from dwca.read import DwCAReader
+from dwca.darwincore.utils import qualname as qn
+import os
+
 
 class ScrapersPipeline:
-
     def open_spider(self, spider):
         print('*'*100)
         print('OPENING')
@@ -37,4 +40,21 @@ class ScrapersPipeline:
         # check postgres db conn
         #sp = ScrapedPlant(latin_name=item['latin_name'], common_name=item['common_name'], additional=item['additional'])
         #await save_to_db(sp)
+        return item
+
+
+class DWCADownloadedPipeline:
+    async def process_item(self, item, spider):
+        print('process gz')
+        crd = os.path.dirname(os.path.realpath(__file__))
+        print('HEE'*10)
+        print(crd)
+        dPath = os.path.join(crd, 'filesDL')
+        print(dPath)
+        fPath = os.path.join(dPath, item['files'][0]['path'])
+        print(fPath)
+        with DwCAReader(fPath) as dwca:
+            print('METAAAa'*10)
+            print(dwca.metadata)
+
         return item

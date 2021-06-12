@@ -1,5 +1,5 @@
 ### Eldin
-scraping/app/scrapers/filesDL/*
+scraping/src/app/scrapers/filesDL/*
 
 ### VisualStudioCode ###
 .vscode/*

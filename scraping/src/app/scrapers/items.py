@@ -5,10 +5,10 @@
 
 import scrapy
 
-def serialize_common_name(value):
+def serialize_common_names(value):
     names = value.split(',')
     names = [x.strip() for x in names]
-    return names[0]
+    return names
 
 def serialize_latin_name(value):
     lname = value[0].capitalize()
@@ -17,10 +17,10 @@ def serialize_latin_name(value):
     return lname
 
 def serialize_additional(value):
-    gen = generate_item(value)
+    additionals = {} 
     for e in value:
-        gen[e[0]] = e[1]
-    return gen
+        additionals[e[0]] = e[1]
+    return additionals
 
 def generate_item(additionals):
     item = scrapy.Item()
@@ -30,6 +30,10 @@ def generate_item(additionals):
 
 class PlantItem(scrapy.Item):
     # define the fields for your item here like:
-    latin_name      = scrapy.Field(serializer=serialize_latin_name)
-    common_name     = scrapy.Field(serializer=serialize_common_name)
-    additional      = scrapy.Field(serializer=serialize_additional)
+    latin_name      = scrapy.Field()
+    common_names    = scrapy.Field()
+    additional      = scrapy.Field()
+
+class ZipfileItem(scrapy.Item):
+    file_urls = scrapy.Field()
+    files = scrapy.Field()

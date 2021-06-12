@@ -10,7 +10,8 @@ from .schema.scrape import ScrapeRequest, ScrapeResponse
 
 
 from .scrapers.spiders.bushcare import BushcareSpider
-from scrapy.crawler import CrawlerProcess, CrawlerRunner
+from .scrapers.spiders.midwest_herb import MidwestHerbariaSpider
+from scrapy.crawler import CrawlerProcess
 from .models.plant_scraped import ScrapedPlant
 
 
@@ -36,23 +37,28 @@ def get_application():
 
 
 app = get_application()
-runner = CrawlerProcess()
+runner = CrawlerProcess(settings={
+        'DOWNLOAD_DELAY': 3,
+        'ROBOTSTXT_OBEY': False,
+        'BOT_NAME': 'floraSpider',
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 16,
+        'COOKIES_ENABLED': False
+    })
 
 async def run_spider(job_id):
     #TODO: figure how to find plants
+    #TODO: before start create job for db with name
+    #TODO: after crawl done, insert all to db, find plant and update job as done, else job as error
     try:
         plants = []
-        runner.crawl(BushcareSpider, plants=plants)
+        #runner.crawl(BushcareSpider, plants=plants)
+        runner.crawl(MidwestHerbariaSpider)
         runner.start()
-        #d = runner.join()
-        #d.addBoth(lambda _: reactor.stop())
-        #reactor.run() # the script will block here until the crawling is finished
-        # save to dbs
         for e in plants:
             await ScrapedPlant.create(**e)
     except Exception as e:
-        print('hehe')
         print(e)
+        pass
 
 
 @app.post("/scrape", tags=["scraper"]) #TODO: finish endpoints, make counter for job_id
