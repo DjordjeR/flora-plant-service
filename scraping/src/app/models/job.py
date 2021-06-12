@@ -1,4 +1,4 @@
-from enum import unique
+from enum import Enum
 from tortoise import fields
 from tortoise.models import Model
 
@@ -8,7 +8,8 @@ class JobTypeEnum(str, Enum):
     stopped = "stopped"
     error = "error"
 
-class Job(Model):
+class ScrapeJob(Model):
     id = fields.IntField(pk=True)
-    status = fields.CharEnumField(JobTypeEnum)
+    status = fields.CharEnumField(max_length=10, enum_type=JobTypeEnum)
+    plant_name = fields.CharField(50)
     result = fields.JSONField()

@@ -1,6 +1,8 @@
 from enum import Enum
+from ..models.plant_scraped import ScrapedPlant
 
 from pydantic import BaseModel
+from tortoise.contrib.pydantic.creator import pydantic_model_creator
 
 
 class JobTypeEnum(str, Enum):
@@ -9,6 +11,7 @@ class JobTypeEnum(str, Enum):
     stopped = "stopped"
     error = "error"
 
+ScrapedPlant_Pydantic = pydantic_model_creator(ScrapedPlant)
 
 # TODO: I have not idea what job result will be
 class JobResult(BaseModel):
