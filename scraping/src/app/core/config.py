@@ -41,7 +41,7 @@ class Settings(BaseSettings):
             "connections": {"default": cls.assemble_db_connection(v, values)},
             "apps": {
                 "models": {
-                    "models": [],
+                    "models": ["app.models.plant_scraped"],
                     "default_connection": "default",
                 },
             },
