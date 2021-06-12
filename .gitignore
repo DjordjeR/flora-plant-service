@@ -1,3 +1,6 @@
+### Eldin
+scraping/app/scrapers/filesDL/*
+
 ### VisualStudioCode ###
 .vscode/*
 *.code-workspace
@@ -6,7 +9,6 @@
 # Ignore all local history of files
 .history
 .ionide
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
