@@ -52,8 +52,11 @@ async def run_spider(job_id):
     try:
         plants = []
         #runner.crawl(BushcareSpider, plants=plants)
-        runner.crawl(MidwestHerbariaSpider)
+        runner.crawl(MidwestHerbariaSpider, plants=plants)
         runner.start()
+
+        print('FOUND PLANTS: ', len(plants))
+        plants = []
         for e in plants:
             await ScrapedPlant.create(**e)
     except Exception as e:
