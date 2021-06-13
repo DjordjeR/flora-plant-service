@@ -1,4 +1,4 @@
 fastapi==0.65.1
 uvicorn[standard]==0.14.0
-tortoise-orm[asyncpg]==0.17.4
+tortoise-orm[asyncpg]
 python-keycloak==0.25.0 

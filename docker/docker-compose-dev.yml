@@ -33,6 +33,9 @@ services:
             DB_PASSWORD: password
             KEYCLOAK_USER: admin
             KEYCLOAK_PASSWORD: Pa55w0rd
+            #JDBC_PARAMS: -b=0.0.0.0
+        ports:
+            - 8081:8080
         depends_on:
             - keycloack_db
 
@@ -45,6 +48,8 @@ services:
             POSTGRES_DB: flora
             POSTGRES_USER: flora
             POSTGRES_PASSWORD: password
+        ports: 
+            - 5432:5432
 
     scraper_db:
         image: postgres:13-alpine
@@ -55,25 +60,30 @@ services:
             POSTGRES_DB: scraper
             POSTGRES_USER: scraper
             POSTGRES_PASSWORD: password
+        ports: 
+            - 5431:5432
 
     meilisearch:
         image: getmeili/meilisearch:v0.20.0
-        restart: unless-stopped
         command: ./meilisearch --master-key=masterKey --no-analytics=true
         volumes: 
             - search_data:/data.ms
+        ports:
+            - 7700:7700
 
     scraping_service:
         build:
-            context: scraping/
+            context: ../scraping/
             dockerfile: ../docker/Dockerfile
         restart: unless-stopped
+        ports: 
+            - 8082:8080
         depends_on: 
             - scraper_db
 
     main_flora_service:
         build:
-            context: main/
+            context: ../main/
             dockerfile: ../docker/Dockerfile
         restart: unless-stopped
         ports: 
