@@ -12,7 +12,6 @@ class BushcareSpider(scrapy.Spider):
         data = response.selector.css('div[class="col-sm-6"]').getall()
         data = [x for x in data if any(y in x for y in ['Botanical', 'botanical', 'comments'])]
 
-        print('parsing')
         for e in data:
             result = re.findall('<b>(.*)</b>(.*)<br>', e)
             plant_info = []
