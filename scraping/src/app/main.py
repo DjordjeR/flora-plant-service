@@ -62,16 +62,8 @@ async def run_spider(job_id, search_query):
     p = Process(target=_execute_spider_in_process, args=(q,))
     p.start()
     loop = asyncio.get_event_loop()
-    executors = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-    await asyncio.wait(
-        fs={
-            # Returns after delay=12 seconds
-            loop.run_in_executor(executors, plants=q.get),
-            loop.run_in_executor(executors, p.join),
-        },
-        return_when=ALL_COMPLETED 
-    )
-    #plants = q.get()
+    plants =  await loop.run_in_executor(None, q.get)
+    await loop.run_in_executor(None, p.join)
     #p.join() # this blocks until the process terminates
 
     print('AMOUNT OF FOUND PLANTS: ', len(plants))
