@@ -5,7 +5,7 @@ from twisted.internet import reactor
 
 from app.core.config import settings
 
-from .schema.job import JobResponseDetailed, JobResponseSimple, ScrapedPlant_Pydantic
+from .schema.job import ScrapedJob_Pydantic, ScrapedPlant_Pydantic
 from .schema.scrape import ScrapeRequest, ScrapeResponse
 
 
@@ -46,7 +46,7 @@ runner = CrawlerProcess(settings={
         'COOKIES_ENABLED': False
     })
 
-async def run_spider(job_id, plant_name):
+async def run_spider(job_id, search_query):
     #TODO: figure how to find plants
     try:
         plants = []
@@ -74,35 +74,25 @@ async def run_spider(job_id, plant_name):
         await related_job.save()
         print('Job done!')
     except Exception as e:
-        print('hehe')
+        print('Oh no')
         print(e)
 
 
-@app.post("/scrape", tags=["scraper"]) #TODO: finish endpoints, make counter for job_id
-async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks, response_model=ScrapeResponse):
+@app.post("/scrape", tags=["scraper"], response_model=ScrapeResponse, responses={400: {"detail": "Bad request"}})
+async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks):
     try:
         #TODO: create new job and background task only if task for same thing is not running already, BASE ON plant_name, somehow
-        new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, plant_name=scrape_req.plant_name, result="{ }")
+        new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query, defaults={'result':dict()})
         job_id = new_job[0].id
         print('Latest job ID=', job_id)        
-        background_tasks.add_task(run_spider, job_id=job_id, plant_name=scrape_req.plant_name) #run scraping in background
+        background_tasks.add_task(run_spider, job_id=job_id, search_query=scrape_req.search_query) #run scraping in background
         return ScrapeResponse(job_id=job_id)
     except Exception as e:
         print(e)
         return HTTPException(400, detail="Bad request")
 
 
-@app.get("/job/{job_id}", tags=["jobs"])
-async def job_simple(job_id: str, response_model=ScrapeJob):
-    try:
-        my_job = await ScrapeJob.get_or_none(id=job_id) #TODO: better way to write this ?
-        if not my_job:
-            return HTTPException(404, detail='Not found')
-        return my_job
-    except:
-        return HTTPException(404, detail='Not found')
-
-
-@app.get("/job/{job_id}/details", tags=["jobs"], response_model=JobResponseDetailed)
-async def job_details(job_id: str):
-    raise NotImplemented
+@app.get("/job/{job_id}", tags=["jobs"], response_model=ScrapedJob_Pydantic, responses={404: {"detail": "Object does not exist"}})
+async def job(job_id: int):
+    my_job = await ScrapeJob.get(id=job_id)
+    return await ScrapedJob_Pydantic.from_tortoise_orm(my_job)

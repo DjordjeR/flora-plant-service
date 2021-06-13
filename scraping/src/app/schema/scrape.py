@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class ScrapeRequest(BaseModel):
-    plant_name: str
+    search_query: str
 
 
 class ScrapeResponse(BaseModel):

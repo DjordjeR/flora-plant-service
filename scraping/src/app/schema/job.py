@@ -1,4 +1,5 @@
 from enum import Enum
+from ..models.job import ScrapeJob
 from ..models.plant_scraped import ScrapedPlant
 
 from pydantic import BaseModel
@@ -12,19 +13,9 @@ class JobTypeEnum(str, Enum):
     error = "error"
 
 ScrapedPlant_Pydantic = pydantic_model_creator(ScrapedPlant)
+ScrapedJob_Pydantic = pydantic_model_creator(ScrapeJob)
 
 # TODO: I have not idea what job result will be
 class JobResult(BaseModel):
     result: str
     plant_info: str
-
-
-class JobResponseSimple(BaseModel):
-    job_id: int
-    status: JobTypeEnum
-
-
-class JobResponseDetailed(JobResponseSimple):
-    job_id: int
-    status: JobTypeEnum
-    job_result: JobResult
