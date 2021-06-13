@@ -22,7 +22,6 @@ async def get_or_create(plant_in: PlantIn_Pydantic) -> PlantOut_Pydantic:
         latin_name=plant_in.latin_name,
         defaults={"common_name": plant_in.common_name, "metadata": plant_in.metadata},
     )
-    print("PLANT OBJ", plant_obj)
     return await PlantOut_Pydantic.from_tortoise_orm(plant_obj)
 
 

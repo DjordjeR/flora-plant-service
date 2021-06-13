@@ -23,7 +23,13 @@ def update_or_add_plant(plant: PlantOut_Pydantic):
     index.add_documents(documents)
 
 
-def search(q):
+def search(q, opt_params):
     client = get_client()
     index = client.index("plants")
-    return index.search(q)
+    ret_dict = index.search(q, opt_params=opt_params)
+    try:
+        for hit in ret_dict["hits"]:
+            del hit["plant_id"]
+    except Exception:
+        pass
+    return ret_dict

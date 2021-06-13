@@ -15,4 +15,6 @@ docker-compose up --build
 
 # For development use
 docker-compose -f docker/docker-compose-dev.yml up --build 
+# Shutdown everything and remove data
+docker-compose -f docker/docker-compose-dev.yml down -v 
 ```
