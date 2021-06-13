@@ -1,8 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
-from twisted.internet import reactor
-
 from app.core.config import settings
 
 from .schema.job import ScrapedJob_Pydantic, ScrapedPlant_Pydantic
@@ -11,11 +9,12 @@ from .schema.scrape import ScrapeRequest, ScrapeResponse
 
 from .scrapers.spiders.bushcare import BushcareSpider
 from .scrapers.spiders.midwest_herb import MidwestHerbariaSpider
-from scrapy.crawler import CrawlerProcess
+from scrapy.crawler import CrawlerProcess, CrawlerRunner
 from .models.plant_scraped import ScrapedPlant
 from .models.job import ScrapeJob, JobTypeEnum
 
-
+from fuzzywuzzy import fuzz
+from multiprocessing import Process, Queue
 
 def get_application():
     _app = FastAPI(title=settings.PROJECT_NAME)
@@ -40,49 +39,69 @@ def get_application():
 app = get_application()
 runner = CrawlerProcess(settings={
         'DOWNLOAD_DELAY': 3,
-        'ROBOTSTXT_OBEY': False,
+        'ROBOTSTXT_OBEY': True,
         'BOT_NAME': 'floraSpider',
         'CONCURRENT_REQUESTS_PER_DOMAIN': 16,
-        'COOKIES_ENABLED': False
+        'COOKIES_ENABLED': False,
+        'LOG_LEVEL': 'ERROR'
     })
 
+def _execute_spider_in_process(q):
+    plants = []
+    runner.crawl(BushcareSpider, plants=plants)
+    #runner.crawl(MidwestHerbariaSpider, plants=plants)
+    runner.start()
+    q.put(plants)
+
 async def run_spider(job_id, search_query):
-    #TODO: figure how to find plants
-    try:
-        plants = []
-        runner.crawl(BushcareSpider, plants=plants)
-        #runner.crawl(MidwestHerbariaSpider, plants=plants)
-        runner.start()
-        print('AMOUNT OF FOUND PLANTS: ', len(plants))
-        #plants = []
-        once = True
-        res = None
-        for e in plants:
-            if once:
-                once = False
-                res = await ScrapedPlant.get_or_create(**e)
-        
-        # after done with adding plants to scraperDB, lets mark job as done and return 
-        
-        print('*'*200)
-        print(res[0])
-        res_pyd = await ScrapedPlant_Pydantic.from_tortoise_orm(res[0])
-        #TODO: update related job, if no plant found put ERROR, myb raise exception on search for plant_name and do it in exception
-        related_job = await ScrapeJob.get(id=job_id)
-        related_job.status = JobTypeEnum.done
-        related_job.result = res_pyd.json()  #TODO: save corresponding plant from plant_name here, serialize pydantic ????
-        await related_job.save()
-        print('Job done!')
-    except Exception as e:
-        print('Oh no')
-        print(e)
+    plants = []
+    q = Queue() # may god help you 
+    p = Process(target=_execute_spider_in_process, args=(q,))
+    p.start()
+    plants = q.get()
+    p.join() # this blocks until the process terminates
+
+    print('AMOUNT OF FOUND PLANTS: ', len(plants))
+
+    matched_plants = []
+    for e in plants:
+        res_awaited = await ScrapedPlant.get_or_create(**e)
+        res = res_awaited[0]
+        ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
+        ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
+        print(ratios)
+        max_ratio = max(ratios)
+        if max_ratio >= 80:
+            print('Found fuzzy match of {}%'.format(max_ratio))
+            matched_plants.append(res)
+    
+    # after done with adding plants to scraperDB, lets mark job as done and return 
+    print('*'*200)
+    print('Amount of matched plants ', len(matched_plants))
+    print('*'*200)
+
+    #res_pyd = await ScrapedPlant_Pydantic.from_tortoise_orm(res[0])
+    #TODO: update related job, if no plant found put ERROR, myb raise exception on search for plant_name and do it in exception
+    related_job = await ScrapeJob.get(id=job_id)
+    related_job.status = JobTypeEnum.done
+    for e in matched_plants:
+        e_pyd =  await ScrapedPlant_Pydantic.from_tortoise_orm(e)
+        related_job.result.append(e_pyd.dict())
+    #related_job.result = res_pyd.json()
+    await related_job.save()
+    print('Job done!')
+    #runner.stop()
 
 
 @app.post("/scrape", tags=["scraper"], response_model=ScrapeResponse, responses={400: {"detail": "Bad request"}})
 async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks):
     try:
+        # check if similar plant name already in db, else checkif background tasks running
+
         #TODO: create new job and background task only if task for same thing is not running already, BASE ON plant_name, somehow
-        new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query, defaults={'result':dict()})
+        # if task running and fuzzymatch >=90% then dont create background
+        # if task ERROR then return cannot find data
+        new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query)
         job_id = new_job[0].id
         print('Latest job ID=', job_id)        
         background_tasks.add_task(run_spider, job_id=job_id, search_query=scrape_req.search_query) #run scraping in background
