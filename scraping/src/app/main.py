@@ -1,9 +1,6 @@
 import asyncio
-from asyncio.tasks import ALL_COMPLETED
-from sys import maxsize
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import tortoise
 from tortoise.contrib.fastapi import register_tortoise
 from app.core.config import settings
 
@@ -13,7 +10,7 @@ from .schema.scrape import ScrapeRequest, ScrapeResponse
 
 from .scrapers.spiders.bushcare import BushcareSpider
 from .scrapers.spiders.midwest_herb import MidwestHerbariaSpider
-from scrapy.crawler import CrawlerProcess, CrawlerRunner
+from scrapy.crawler import CrawlerProcess
 from .models.plant_scraped import ScrapedPlant
 from .models.job import ScrapeJob, JobTypeEnum
 
@@ -70,17 +67,19 @@ async def run_spider(job_id, search_query):
     await loop.run_in_executor(None, p.join)
 
     print('AMOUNT OF FOUND PLANTS: ', len(plants))
-    matched_plants = []
+    matched_plants = set()
     for e in plants:
-        res_awaited = await ScrapedPlant.get_or_create(**e)
+        ln = e.get('latin_name', '')
+        del e['latin_name']
+        res_awaited = await ScrapedPlant.get_or_create(latin_name=ln, defaults=e)
         res = res_awaited[0]
         ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
         ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
         max_ratio = max(ratios)
         if max_ratio >= 80:
             print('Found fuzzy match of {}%'.format(max_ratio))
-            matched_plants.append(res)
-    
+            matched_plants.add(res)
+
     # after done with adding plants to scraperDB, lets mark job as done and return
     print('*'*200)
     print('Amount of matched plants ', len(matched_plants))
@@ -104,7 +103,7 @@ async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks):
         # check if similar plant name already in db, else checkif background tasks running
 
         #TODO: create new job and background task only if task for same thing is not running already, BASE ON plant_name, somehow
-        # if task running and fuzzymatch >=90% then dont create background
+        # if task running and fuzzymatch >=80% then dont create background
         # if task ERROR then return cannot find data
         new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query)
         job_id = new_job[0].id
