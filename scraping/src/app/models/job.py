@@ -12,4 +12,4 @@ class ScrapeJob(Model):
     id = fields.IntField(pk=True)
     status = fields.CharEnumField(max_length=10, enum_type=JobTypeEnum)
     search_query = fields.CharField(50)
-    result = fields.JSONField()
+    result = fields.JSONField(default=list())

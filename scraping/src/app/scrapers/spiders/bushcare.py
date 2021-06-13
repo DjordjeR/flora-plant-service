@@ -11,7 +11,7 @@ class BushcareSpider(scrapy.Spider):
     def parse(self, response):
         data = response.selector.css('div[class="col-sm-6"]').getall()
         data = [x for x in data if any(y in x for y in ['Botanical', 'botanical', 'comments'])]
-        
+
         for e in data:
             result = re.findall('<b>(.*)</b>(.*)<br>', e)
             plant_info = []
@@ -19,7 +19,7 @@ class BushcareSpider(scrapy.Spider):
                 k = html.unescape(p[0]).strip().replace(u'\xa0', ' ')
                 v = html.unescape(p[1]).strip().replace(u'\xa0', ' ')
                 plant_info.append((k,v))
-            
+
             plant_info = plant_info[:-3]
             plant_info.append(plant_info.pop(0)) #move family to back
 
