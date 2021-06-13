@@ -21,6 +21,8 @@ services:
             POSTGRES_DB: keycloak
             POSTGRES_USER: keycloak
             POSTGRES_PASSWORD: password
+        ports:
+            - 8081:8080
     keycloak:
         image: quay.io/keycloak/keycloak:13.0.1
         restart: unless-stopped
@@ -79,6 +81,8 @@ services:
         ports: 
             - 8080:8080
         depends_on: 
+            - scraping_service
+            - meilisearch
             - keycloak
             - flora_db
         links: 

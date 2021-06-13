@@ -153,6 +153,7 @@ def auth_user_register(user_in: user.UserIn):
         return user_out
     except Exception as e:
         try:
+            print(e)
             msg = json.loads(e.error_message.decode("utf-8"))
             msg = msg.get("error_description", "Unkown error")
         except:
