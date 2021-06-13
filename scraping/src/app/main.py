@@ -1,3 +1,5 @@
+import asyncio
+from asyncio.tasks import ALL_COMPLETED
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
@@ -53,13 +55,24 @@ def _execute_spider_in_process(q):
     runner.start()
     q.put(plants)
 
+import concurrent.futures
 async def run_spider(job_id, search_query):
     plants = []
     q = Queue() # may god help you 
     p = Process(target=_execute_spider_in_process, args=(q,))
     p.start()
-    plants = q.get()
-    p.join() # this blocks until the process terminates
+    loop = asyncio.get_event_loop()
+    executors = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    await asyncio.wait(
+        fs={
+            # Returns after delay=12 seconds
+            loop.run_in_executor(executors, plants=q.get),
+            loop.run_in_executor(executors, p.join),
+        },
+        return_when=ALL_COMPLETED 
+    )
+    #plants = q.get()
+    #p.join() # this blocks until the process terminates
 
     print('AMOUNT OF FOUND PLANTS: ', len(plants))
 
@@ -103,7 +116,7 @@ async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks):
         # if task ERROR then return cannot find data
         new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query)
         job_id = new_job[0].id
-        print('Latest job ID=', job_id)        
+        print('Latest job ID=', job_id) 
         background_tasks.add_task(run_spider, job_id=job_id, search_query=scrape_req.search_query) #run scraping in background
         return ScrapeResponse(job_id=job_id)
     except Exception as e:

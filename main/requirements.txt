@@ -1,4 +1,5 @@
 fastapi==0.65.1
 uvicorn[standard]==0.14.0
 tortoise-orm[asyncpg]
-python-keycloak==0.25.0 
+python-keycloak==0.25.0
+httpx
