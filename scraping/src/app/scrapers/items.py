@@ -11,9 +11,16 @@ def serialize_common_names(value):
     return names
 
 def serialize_latin_name(value):
-    lname = value[0].capitalize()
+    if "<font" in value[0]:
+        lname = value[0].split('<font')[0].strip().capitalize()
+    else:
+        lname = value[0].capitalize()
+
     for i in range(1, len(value)):
-        lname += " " + value[i].lower()
+        if "<font" in value[i]:
+            lname += " " + value[i].split('<font')[0].lower()
+        else:
+            lname += " " + value[i].lower()
     return lname
 
 def serialize_additional(value):

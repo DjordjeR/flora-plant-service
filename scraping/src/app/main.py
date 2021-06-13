@@ -50,8 +50,8 @@ runner = CrawlerProcess(settings={
 def _execute_spider_in_process(q):
     plants = []
     plants_2 = []
-    #runner.crawl(BushcareSpider, plants=plants)
-    runner.crawl(MidwestHerbariaSpider, plants=plants_2)
+    runner.crawl(BushcareSpider, plants=plants)
+    #runner.crawl(MidwestHerbariaSpider, plants=plants_2)
     runner.start()
     plants.extend(plants_2)
     q.put(plants)
@@ -92,7 +92,6 @@ async def run_spider(job_id, search_query):
     for e in matched_plants:
         e_pyd =  await ScrapedPlant_Pydantic.from_tortoise_orm(e)
         related_job.result.append(e_pyd.dict())
-    #related_job.result = res_pyd.json()
     await related_job.save()
     print('Job done!')
 

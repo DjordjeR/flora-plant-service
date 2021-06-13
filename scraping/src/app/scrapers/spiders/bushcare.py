@@ -6,12 +6,13 @@ from ..items import *
 class BushcareSpider(scrapy.Spider):
     name = 'bushcare'
     #allowed_domains = [https://roleybushcare.com.au/flora-database']
-    start_urls = ['https://roleybushcare.com.au/plants_database/plantmanager.php?organisation_name=roleybushcare']
+    start_urls = ['https://roleybushcare.com.au/plants_database/plantmanager.php?organisation_name=Roleybushcare&from=&Action=search&list_what=all&lik=&listed_so_far={}#top_loc'.format(x) for x in range(0,400, 20)]
 
     def parse(self, response):
         data = response.selector.css('div[class="col-sm-6"]').getall()
         data = [x for x in data if any(y in x for y in ['Botanical', 'botanical', 'comments'])]
 
+        print('parsing')
         for e in data:
             result = re.findall('<b>(.*)</b>(.*)<br>', e)
             plant_info = []
