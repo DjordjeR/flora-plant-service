@@ -31,6 +31,7 @@ class Settings(BaseSettings):
 
     # Custom
     AUTH_ON: bool
+    SCRAPING_URL: str
 
     @validator("DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
