@@ -1,10 +1,15 @@
-from enum import unique
 from tortoise import fields
 from tortoise.models import Model
 
 
 class Plant(Model):
     id = fields.IntField(pk=True)
-    common_name = fields.CharField(50, unique=True)
-    latin_name = fields.CharField(50, unique=True)
-    metadata = fields.JSONField(null=True)
+    latin_name = fields.CharField(256, unique=True)
+    common_name = fields.JSONField(default=list())
+    metadata = fields.JSONField(default=dict())
+
+
+class PlantJob(Model):
+    id = fields.IntField(pk=True)
+    search_query = fields.CharField(256, unique=True)
+    job_id = fields.IntField()
