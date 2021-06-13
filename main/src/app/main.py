@@ -7,7 +7,7 @@ from tortoise.contrib.fastapi import register_tortoise
 from app.core.config import settings
 
 from .authentication import auth_router, get_current_user
-from .routers import example, plant, search
+from .routers import plant, search
 
 
 def _get_deps():
