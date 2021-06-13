@@ -27,7 +27,9 @@ Flora Web Service supports authentication, however since development can be quit
 
 To disable authentication change *main/docker/.env.docker* **AUTH_ON** to **false**.
 
-If you are using authentication you can register, get you token and then in the right upper corner click on Authorize, paste your token there and then you can access all of the hidden endpoints.
+If you are using authentication you can register, get you token and then in the right upper corner click on Authorize, paste your token there and then you cError: Forbidden
+
+an access all of the hidden endpoints.
 
 All of this can be done from postman too, in that case you need to send a 
 **Authorization: Bearer -token-** header.

@@ -9,8 +9,13 @@ from ..utils.tasks import check_if_job_exists, scrape_for_plant
 
 router = APIRouter()
 
-# TODO: Add pagination if needed
-@router.get("/plant", tags=["plant"], response_model=List[plant.PlantOut_Pydantic])
+
+@router.get(
+    "/plant",
+    tags=["plant"],
+    response_model=List[plant.PlantOut_Pydantic],
+    responses={403: {"detail": "Not authorized"}},
+)
 async def get_plants():
     return await plant.get_plants()
 
@@ -19,9 +24,15 @@ async def get_plants():
     "/plant/{latin_name}",
     tags=["plant"],
     response_model=plant.PlantOut_Pydantic,
-    responses={404: {"detail": "Object does not exist"}},
+    responses={
+        404: {"detail": "Object does not exist"},
+        403: {"detail": "Not authorized"},
+    },
 )
-async def get_plant(latin_name: str, background_tasks: BackgroundTasks):
+async def get_plant(
+    latin_name: str,
+    background_tasks: BackgroundTasks,
+):
     try:
         return await plant.get_plant(latin_name)
     except DoesNotExist:
@@ -34,13 +45,21 @@ async def get_plant(latin_name: str, background_tasks: BackgroundTasks):
             return await plant.get_plant(latin_name)
 
 
-@router.post("/plant", tags=["plant"], response_model=plant.PlantOut_Pydantic)
+@router.post(
+    "/plant",
+    tags=["plant"],
+    response_model=plant.PlantOut_Pydantic,
+    responses={403: {"detail": "Not authorized"}},
+)
 async def create_plant(plant_in: plant.PlantIn_Pydantic):
     return await plant.create_plant(plant_in)
 
 
 @router.put(
-    "/plant/{latin_name}", tags=["plant"], response_model=plant.PlantOut_Pydantic
+    "/plant/{latin_name}",
+    tags=["plant"],
+    response_model=plant.PlantOut_Pydantic,
+    responses={403: {"detail": "Not authorized"}},
 )
 async def update_plant(latin_name: str, plant_in: plant.Plant_Update_Pydantic):
     return await plant.update_plant(latin_name, plant_in)
