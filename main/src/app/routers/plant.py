@@ -1,13 +1,14 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from typing import List
 from starlette.responses import JSONResponse
-
 from tortoise.exceptions import DoesNotExist
 
 from ..schema import plant
 from ..utils.tasks import scrape_for_plant
 from ..models.plant import PlantJob
 from ..utils.scrape import Scrape
+
+from ..utils import search
 
 router = APIRouter()
 
@@ -18,16 +19,30 @@ async def get_plants():
 
 
 async def _check_if_job_exists(plant_name: str):
+    # TODO: Add this stuff to search too
     try:
         plant_job = await PlantJob.get(search_query=plant_name)
     except DoesNotExist:
         return None
 
     scraper = Scrape()
-    data = await scraper.get_job(plant_job.id)
+    try:
+        data = await scraper.get_job(plant_job.id)
+    except Exception:
+        return None
+
     if data.get("status") == "done":
         for p in data.get("result"):
-            pass
+            p_new = plant.PlantIn_Pydantic(
+                latin_name=p["latin_name"],
+                common_name=p["common_names"],
+                metadata=p["additional"],
+            )
+            plant_out = await plant.get_or_create(p_new)
+            search.update_or_add_plant(plant_out)
+        await PlantJob.delete(plant_job)
+
+    return True
 
 
 @router.get(
@@ -46,6 +61,8 @@ async def get_plant(plant_name: str, background_tasks: BackgroundTasks):
             return JSONResponse(
                 status_code=404, content={"detail": "Object does not exist"}
             )
+        else:
+            return await plant.get_plant(plant_name)
 
 
 @router.post("/plant", tags=["plant"], response_model=plant.PlantOut_Pydantic)

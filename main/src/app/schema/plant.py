@@ -17,6 +17,15 @@ Plant_Update_Pydantic = pydantic_model_creator(
 )
 
 
+async def get_or_create(plant_in: PlantIn_Pydantic) -> PlantOut_Pydantic:
+    plant_obj, _ = await plant.Plant.get_or_create(
+        latin_name=plant_in.latin_name,
+        defaults={"common_name": plant_in.common_name, "metadata": plant_in.metadata},
+    )
+    print("PLANT OBJ", plant_obj)
+    return await PlantOut_Pydantic.from_tortoise_orm(plant_obj)
+
+
 async def create_plant(plant_in: PlantIn_Pydantic) -> PlantOut_Pydantic:
     plant_obj = await plant.Plant.create(**plant_in.dict(exclude_unset=True))
     return await PlantOut_Pydantic.from_tortoise_orm(plant_obj)

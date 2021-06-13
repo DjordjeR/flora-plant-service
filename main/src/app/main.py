@@ -6,21 +6,15 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from app.core.config import settings
 
-
+from .authentication import auth_router, get_current_user
 from .routers import plant, search
 
-if settings.AUTH_ON:
 
-    from .authentication import auth_router, get_current_user
-
-    def _get_deps():
+def _get_deps():
+    if settings.AUTH_ON:
         return [Depends(get_current_user)]
-
-
-else:
-
-    def _get_deps():
-        return []
+    else:
+        []
 
 
 def get_application():

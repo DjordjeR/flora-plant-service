@@ -1,6 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter
 
+from ..utils import search as msearch
+
 router = APIRouter()
 
 
@@ -11,4 +13,4 @@ async def search(
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
 ):
-    return {"message": "Hello world!"}
+    return msearch.search(q)
