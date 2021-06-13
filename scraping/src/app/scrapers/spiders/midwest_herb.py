@@ -10,7 +10,7 @@ class MidwestHerbariaSpider(scrapy.Spider):
             'scrapy.pipelines.files.FilesPipeline': 1,
             'app.scrapers.pipelines.DWCADownloadedPipeline': 2
             },
-        "FILES_STORE": '/home/eldin/Desktop/ssd/flora-plant-service/scraping/src/app/scrapers/filesDL/'
+        "FILES_STORE": 'tmp/scrapyDownloaded'
         }
 
     def parse(self, response):

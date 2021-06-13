@@ -50,12 +50,16 @@ runner = CrawlerProcess(settings={
 def _execute_spider_in_process(q):
     plants = []
     plants_2 = []
+    plants_3 = []
+    # define which crawlers to run
     runner.crawl(BushcareSpider, plants=plants)
     #runner.crawl(MidwestHerbariaSpider, plants=plants_2)
+    #runner.crawl(MidwestHerbariaSpider, plants=plants_3)
     runner.start()
+    # add to one big list
     plants.extend(plants_2)
+    plants.extend(plants_3)
     q.put(plants)
-
 
 async def run_spider(job_id, search_query):
     plants = []
@@ -71,13 +75,12 @@ async def run_spider(job_id, search_query):
     for e in plants:
         ln = e.get('latin_name', '')
         del e['latin_name']
-        res_awaited = await ScrapedPlant.get_or_create(latin_name=ln, defaults=e)
-        res = res_awaited[0]
+        res, _ = await ScrapedPlant.get_or_create(latin_name=ln, defaults=e)
         ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
         ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
         max_ratio = max(ratios)
         if max_ratio >= 80:
-            print('Found fuzzy match of {}%'.format(max_ratio))
+            print('Found fuzzy match of {}%'.format(max_ratio)) #TODO: improve fuzzy matching
             matched_plants.add(res)
 
     # after done with adding plants to scraperDB, lets mark job as done and return
@@ -87,10 +90,10 @@ async def run_spider(job_id, search_query):
 
     #res_pyd = await ScrapedPlant_Pydantic.from_tortoise_orm(res[0])
     #TODO: update related job, if no plant found put ERROR, myb raise exception on search for plant_name and do it in exception
-    related_job = await ScrapeJob.get(id=job_id)
+    related_job = await ScrapeJob.get(job_id=job_id)
     related_job.status = JobTypeEnum.done
     for e in matched_plants:
-        e_pyd =  await ScrapedPlant_Pydantic.from_tortoise_orm(e)
+        e_pyd =  await ScrapedPlant_Pydantic.from_tortoise_orm(e) #TODO: remove pk
         related_job.result.append(e_pyd.dict())
     await related_job.save()
     print('Job done!')
@@ -104,8 +107,8 @@ async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks):
         #TODO: create new job and background task only if task for same thing is not running already, BASE ON plant_name, somehow
         # if task running and fuzzymatch >=80% then dont create background
         # if task ERROR then return cannot find data
-        new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query)
-        job_id = new_job[0].id
+        new_job, _ = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query)
+        job_id = new_job.job_id
         print('Latest job ID=', job_id) 
         background_tasks.add_task(run_spider, job_id=job_id, search_query=scrape_req.search_query) #run scraping in background
         return ScrapeResponse(job_id=job_id)
@@ -116,5 +119,5 @@ async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks):
 
 @app.get("/job/{job_id}", tags=["jobs"], response_model=ScrapedJob_Pydantic, responses={404: {"detail": "Object does not exist"}})
 async def job(job_id: int):
-    my_job = await ScrapeJob.get(id=job_id)
+    my_job = await ScrapeJob.get(job_id=job_id)
     return await ScrapedJob_Pydantic.from_tortoise_orm(my_job)

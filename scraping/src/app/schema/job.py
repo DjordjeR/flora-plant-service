@@ -12,7 +12,7 @@ class JobTypeEnum(str, Enum):
     stopped = "stopped"
     error = "error"
 
-ScrapedPlant_Pydantic = pydantic_model_creator(ScrapedPlant)
+ScrapedPlant_Pydantic = pydantic_model_creator(ScrapedPlant, exclude=("id",))
 ScrapedJob_Pydantic = pydantic_model_creator(ScrapeJob)
 
 # TODO: I have not idea what job result will be

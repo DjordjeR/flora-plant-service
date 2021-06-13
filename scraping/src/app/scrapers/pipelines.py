@@ -16,8 +16,7 @@ import os
 
 class DWCADownloadedPipeline:
     async def process_item(self, item, spider):
-        crd = os.path.dirname(os.path.realpath(__file__))
-        fPath = os.path.join(os.path.join(crd, 'filesDL'), item['files'][0]['path'])
+        fPath = os.path.join('tmp/scrapyDownloaded', item['files'][0]['path'])
         print(fPath)
         interesting_data = ['recordedBy','family', 'recordedDate', 'order', 'class', 'phylum', 'kingdom', 'habitat']
         with DwCAReader(fPath) as dwca:

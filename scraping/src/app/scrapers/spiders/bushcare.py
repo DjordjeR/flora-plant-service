@@ -6,7 +6,7 @@ from ..items import *
 class BushcareSpider(scrapy.Spider):
     name = 'bushcare'
     #allowed_domains = [https://roleybushcare.com.au/flora-database']
-    start_urls = ['https://roleybushcare.com.au/plants_database/plantmanager.php?organisation_name=Roleybushcare&from=&Action=search&list_what=all&lik=&listed_so_far={}#top_loc'.format(x) for x in range(0,400, 20)]
+    start_urls = ['https://roleybushcare.com.au/plants_database/plantmanager.php?organisation_name=Roleybushcare&from=&Action=search&list_what=all&lik=&listed_so_far={}#top_loc'.format(x) for x in range(0,20, 20)]
 
     def parse(self, response):
         data = response.selector.css('div[class="col-sm-6"]').getall()
