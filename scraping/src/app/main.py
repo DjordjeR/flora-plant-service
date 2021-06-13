@@ -1,7 +1,9 @@
 import asyncio
 from asyncio.tasks import ALL_COMPLETED
+from sys import maxsize
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import tortoise
 from tortoise.contrib.fastapi import register_tortoise
 from app.core.config import settings
 
@@ -50,12 +52,14 @@ runner = CrawlerProcess(settings={
 
 def _execute_spider_in_process(q):
     plants = []
-    runner.crawl(BushcareSpider, plants=plants)
-    #runner.crawl(MidwestHerbariaSpider, plants=plants)
+    plants_2 = []
+    #runner.crawl(BushcareSpider, plants=plants)
+    runner.crawl(MidwestHerbariaSpider, plants=plants_2)
     runner.start()
+    plants.extend(plants_2)
     q.put(plants)
 
-import concurrent.futures
+
 async def run_spider(job_id, search_query):
     plants = []
     q = Queue() # may god help you 
@@ -64,23 +68,20 @@ async def run_spider(job_id, search_query):
     loop = asyncio.get_event_loop()
     plants =  await loop.run_in_executor(None, q.get)
     await loop.run_in_executor(None, p.join)
-    #p.join() # this blocks until the process terminates
 
     print('AMOUNT OF FOUND PLANTS: ', len(plants))
-
     matched_plants = []
     for e in plants:
         res_awaited = await ScrapedPlant.get_or_create(**e)
         res = res_awaited[0]
         ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
         ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
-        print(ratios)
         max_ratio = max(ratios)
         if max_ratio >= 80:
             print('Found fuzzy match of {}%'.format(max_ratio))
             matched_plants.append(res)
     
-    # after done with adding plants to scraperDB, lets mark job as done and return 
+    # after done with adding plants to scraperDB, lets mark job as done and return
     print('*'*200)
     print('Amount of matched plants ', len(matched_plants))
     print('*'*200)
@@ -95,7 +96,6 @@ async def run_spider(job_id, search_query):
     #related_job.result = res_pyd.json()
     await related_job.save()
     print('Job done!')
-    #runner.stop()
 
 
 @app.post("/scrape", tags=["scraper"], response_model=ScrapeResponse, responses={400: {"detail": "Bad request"}})

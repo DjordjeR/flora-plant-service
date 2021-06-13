@@ -58,14 +58,18 @@ class DWCADownloadedPipeline:
             print('+'*100)
             for e in dwca.rows:
                 curr_item = PlantItem()
+                curr_item['common_names'] = []
                 additionals = {}
                 for k,v in e.data.items():
-                    if 'vernacularName' in k and len(v):
-                        curr_item['common_names'] = v
-                    elif 'scientificName' in k and len(v):
+                    if len(v) and 'vernacularName' in k:
+                        curr_item['common_names'].append(v)                        
+                    elif len(v) and 'scientificName' in k:
                         curr_item['latin_name'] = v
-                    else:#if any(map(k.__contains__, interesting_data)):
-                        additionals[k] = v
+                    elif len(v):
+                        if any(map(k.__contains__, interesting_data)):
+                            ck = k.split('/')
+                            ck = ck[len(ck)-1]
+                            additionals[ck] = v
                 curr_item['additional'] = additionals
                 spider.plants.append(curr_item)
 
