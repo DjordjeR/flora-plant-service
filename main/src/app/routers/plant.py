@@ -6,6 +6,7 @@ from tortoise.exceptions import DoesNotExist
 
 from ..schema import plant
 from ..utils.tasks import check_if_job_exists, scrape_for_plant
+from ..utils import search
 
 router = APIRouter()
 
@@ -62,4 +63,6 @@ async def create_plant(plant_in: plant.PlantIn_Pydantic):
     responses={403: {"detail": "Not authorized"}},
 )
 async def update_plant(latin_name: str, plant_in: plant.Plant_Update_Pydantic):
-    return await plant.update_plant(latin_name, plant_in)
+    p = await plant.update_plant(latin_name, plant_in)
+    await search.update_or_add_plant(p)
+    return p
