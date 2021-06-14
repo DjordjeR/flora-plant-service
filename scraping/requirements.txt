@@ -1,0 +1,5 @@
+Scrapy==2.5.0
+tortoise-orm[asyncpg]
+fuzzywuzzy==0.18.0
+python-dwca-reader==0.15.0
+python-Levenshtein==0.12.2

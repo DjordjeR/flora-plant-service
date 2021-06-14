@@ -1,12 +1,22 @@
-from fastapi import FastAPI
+import asyncio
+from asyncio.tasks import ALL_COMPLETED
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
-
 from app.core.config import settings
 
-from .schema.job import JobResponseDetailed, JobResponseSimple
+from .schema.job import ScrapedJob_Pydantic, ScrapedPlant_Pydantic
 from .schema.scrape import ScrapeRequest, ScrapeResponse
 
+
+from .scrapers.spiders.bushcare import BushcareSpider
+from .scrapers.spiders.midwest_herb import MidwestHerbariaSpider
+from scrapy.crawler import CrawlerProcess, CrawlerRunner
+from .models.plant_scraped import ScrapedPlant
+from .models.job import ScrapeJob, JobTypeEnum
+
+from fuzzywuzzy import fuzz
+from multiprocessing import Process, Queue
 
 def get_application():
     _app = FastAPI(title=settings.PROJECT_NAME)
@@ -29,23 +39,84 @@ def get_application():
 
 
 app = get_application()
+runner = CrawlerProcess(settings={
+        'DOWNLOAD_DELAY': 3,
+        'ROBOTSTXT_OBEY': True,
+        'BOT_NAME': 'floraSpider',
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 16,
+        'COOKIES_ENABLED': False,
+        'LOG_LEVEL': 'ERROR'
+    })
+
+def _execute_spider_in_process(q):
+    plants = []
+    runner.crawl(BushcareSpider, plants=plants)
+    #runner.crawl(MidwestHerbariaSpider, plants=plants)
+    runner.start()
+    q.put(plants)
+
+import concurrent.futures
+async def run_spider(job_id, search_query):
+    plants = []
+    q = Queue() # may god help you 
+    p = Process(target=_execute_spider_in_process, args=(q,))
+    p.start()
+    loop = asyncio.get_event_loop()
+    plants =  await loop.run_in_executor(None, q.get)
+    await loop.run_in_executor(None, p.join)
+    #p.join() # this blocks until the process terminates
+
+    print('AMOUNT OF FOUND PLANTS: ', len(plants))
+
+    matched_plants = []
+    for e in plants:
+        res_awaited = await ScrapedPlant.get_or_create(**e)
+        res = res_awaited[0]
+        ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
+        ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
+        print(ratios)
+        max_ratio = max(ratios)
+        if max_ratio >= 80:
+            print('Found fuzzy match of {}%'.format(max_ratio))
+            matched_plants.append(res)
+    
+    # after done with adding plants to scraperDB, lets mark job as done and return 
+    print('*'*200)
+    print('Amount of matched plants ', len(matched_plants))
+    print('*'*200)
+
+    #res_pyd = await ScrapedPlant_Pydantic.from_tortoise_orm(res[0])
+    #TODO: update related job, if no plant found put ERROR, myb raise exception on search for plant_name and do it in exception
+    related_job = await ScrapeJob.get(id=job_id)
+    related_job.status = JobTypeEnum.done
+    for e in matched_plants:
+        e_pyd =  await ScrapedPlant_Pydantic.from_tortoise_orm(e)
+        related_job.result.append(e_pyd.dict())
+    #related_job.result = res_pyd.json()
+    await related_job.save()
+    print('Job done!')
+    #runner.stop()
 
 
-@app.post("/scrape", tags=["scraper"], response_model=ScrapeResponse)
-async def scrape(scrape_req: ScrapeRequest):
-    raise NotImplemented
+@app.post("/scrape", tags=["scraper"], response_model=ScrapeResponse, responses={400: {"detail": "Bad request"}})
+async def scrape(scrape_req: ScrapeRequest, background_tasks: BackgroundTasks):
+    try:
+        # check if similar plant name already in db, else checkif background tasks running
+
+        #TODO: create new job and background task only if task for same thing is not running already, BASE ON plant_name, somehow
+        # if task running and fuzzymatch >=90% then dont create background
+        # if task ERROR then return cannot find data
+        new_job = await ScrapeJob.get_or_create(status=JobTypeEnum.running, search_query=scrape_req.search_query)
+        job_id = new_job[0].id
+        print('Latest job ID=', job_id) 
+        background_tasks.add_task(run_spider, job_id=job_id, search_query=scrape_req.search_query) #run scraping in background
+        return ScrapeResponse(job_id=job_id)
+    except Exception as e:
+        print(e)
+        return HTTPException(400, detail="Bad request")
 
 
-@app.get("/job/{job_id}", tags=["jobs"], response_model=JobResponseSimple)
-async def job_simple(job_id: str):
-    raise NotImplemented
-
-
-@app.get("/job/{job_id}/details", tags=["jobs"], response_model=JobResponseDetailed)
-async def job_details(job_id: str):
-    raise NotImplemented
-
-
-@app.get("/")
-def test():
-    return {"a": "b"}
+@app.get("/job/{job_id}", tags=["jobs"], response_model=ScrapedJob_Pydantic, responses={404: {"detail": "Object does not exist"}})
+async def job(job_id: int):
+    my_job = await ScrapeJob.get(id=job_id)
+    return await ScrapedJob_Pydantic.from_tortoise_orm(my_job)
