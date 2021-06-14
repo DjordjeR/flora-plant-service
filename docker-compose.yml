@@ -79,6 +79,8 @@ services:
         ports: 
             - 8080:8080
         depends_on: 
+            - scraping_service
+            - meilisearch
             - keycloak
             - flora_db
         links: 

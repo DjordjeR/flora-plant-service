@@ -15,18 +15,22 @@ from app.core.config import settings
 
 from .schema import user
 
-keycloak_openid = KeycloakOpenID(
-    server_url=settings.KEYCLOAK_URL,
-    client_id=settings.KEYCLOAK_CLIENT_ID,
-    realm_name=settings.KEYCLOAK_REALM_NAME,
-)
 
-keycloak_openid_admin = KeycloakAdmin(
-    server_url=settings.KEYCLOAK_URL,
-    username=settings.KEYCLOAK_ADMIN_USER,
-    password=settings.KEYCLOAK_ADMIN_PASSWORD,
-    realm_name=settings.KEYCLOAK_REALM_NAME,
-)
+def _get_keycloak():
+    return KeycloakOpenID(
+        server_url=settings.KEYCLOAK_URL,
+        client_id=settings.KEYCLOAK_CLIENT_ID,
+        realm_name=settings.KEYCLOAK_REALM_NAME,
+    )
+
+
+def _get_keycloak_admin():
+    return KeycloakAdmin(
+        server_url=settings.KEYCLOAK_URL,
+        username=settings.KEYCLOAK_ADMIN_USER,
+        password=settings.KEYCLOAK_ADMIN_PASSWORD,
+        realm_name=settings.KEYCLOAK_REALM_NAME,
+    )
 
 
 auth_router = APIRouter()
@@ -65,7 +69,7 @@ auth_bearer = AuthBase()
 
 def _verify_user(token_in: str) -> user.UserLoggedIn:
     try:
-        user_info = keycloak_openid.userinfo(str(token_in))
+        user_info = _get_keycloak().userinfo(str(token_in))
         print(user_info)
         return user.UserLoggedIn(**user_info)
     except Exception as e:
@@ -92,7 +96,7 @@ def get_current_user(
 def auth_token(user_in: user.UserLoginRequest):
     try:
         return user.UserLoginResponse(
-            **keycloak_openid.token(user_in.username, user_in.password)
+            **_get_keycloak().token(user_in.username, user_in.password)
         )
     except Exception as e:
         try:
@@ -111,7 +115,7 @@ def auth_token(user_in: user.UserLoginRequest):
 )
 def auth_token_refresh(rr: RefreshRequest):
     try:
-        return user.UserLoginResponse(**keycloak_openid.refresh_token(rr.refresh_token))
+        return user.UserLoginResponse(**_get_keycloak().refresh_token(rr.refresh_token))
     except Exception as e:
         try:
             msg = json.loads(e.error_message.decode("utf-8"))
@@ -129,7 +133,7 @@ def auth_token_refresh(rr: RefreshRequest):
 )
 def auth_user_register(user_in: user.UserIn):
     try:
-        new_user = keycloak_openid_admin.create_user(
+        new_user = _get_keycloak_admin().create_user(
             {
                 "email": user_in.email,
                 "username": user_in.username,
@@ -144,7 +148,7 @@ def auth_user_register(user_in: user.UserIn):
                 ],
             }
         )
-        keycloak_openid_admin.set_user_password(
+        _get_keycloak_admin().set_user_password(
             user_id=new_user, password=user_in.password, temporary=False
         )
 
@@ -153,6 +157,7 @@ def auth_user_register(user_in: user.UserIn):
         return user_out
     except Exception as e:
         try:
+            print(e)
             msg = json.loads(e.error_message.decode("utf-8"))
             msg = msg.get("error_description", "Unkown error")
         except:

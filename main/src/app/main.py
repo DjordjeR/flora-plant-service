@@ -9,8 +9,6 @@ from app.core.config import settings
 from .authentication import auth_router, get_current_user
 from .routers import plant, search
 
-from .utils.scrape import Scrape
-
 
 def _get_deps():
     if settings.AUTH_ON:
