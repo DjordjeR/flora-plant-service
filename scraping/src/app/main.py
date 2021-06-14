@@ -10,6 +10,7 @@ from .schema.scrape import ScrapeRequest, ScrapeResponse
 
 from .scrapers.spiders.bushcare import BushcareSpider
 from .scrapers.spiders.midwest_herb import MidwestHerbariaSpider
+from .scrapers.spiders.sprucer import SprucerSpider
 from scrapy.crawler import CrawlerProcess
 from .models.plant_scraped import ScrapedPlant
 from .models.job import ScrapeJob, JobTypeEnum
@@ -44,7 +45,7 @@ runner = CrawlerProcess(settings={
         'BOT_NAME': 'floraSpider',
         'CONCURRENT_REQUESTS_PER_DOMAIN': 16,
         'COOKIES_ENABLED': False,
-        'LOG_LEVEL': 'ERROR'
+        #'LOG_LEVEL': 'ERROR'
     })
 
 def _execute_spider_in_process(q):
@@ -52,9 +53,9 @@ def _execute_spider_in_process(q):
     plants_2 = []
     plants_3 = []
     # define which crawlers to run
-    runner.crawl(BushcareSpider, plants=plants)
+    #runner.crawl(BushcareSpider, plants=plants)
     #runner.crawl(MidwestHerbariaSpider, plants=plants_2)
-    #runner.crawl(MidwestHerbariaSpider, plants=plants_3)
+    runner.crawl(SprucerSpider, plants=plants_3)
     runner.start()
     # add to one big list
     plants.extend(plants_2)
@@ -75,7 +76,7 @@ async def run_spider(job_id, search_query):
     for e in plants:
         ln = e.get('latin_name', '')
         del e['latin_name']
-        res, _ = await ScrapedPlant.get_or_create(latin_name=ln, defaults=e)
+        res, _ = await ScrapedPlant.get_or_create(latin_name=ln, defaults=e) #TODO: why dfq is <b> added randomly????
         ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
         ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
         max_ratio = max(ratios)
