@@ -14,7 +14,7 @@ base_url = "http://127.0.0.1:8000"
 
 # Borrowed from https://stackoverflow.com/questions/57412825/how-to-start-a-uvicorn-fastapi-in-background-when-testing-with-pytest
 def run_server():
-    uvicorn.run(app, port=8080, loop="asyncio", lifespan="on")
+    uvicorn.run(app, port=8000, loop="asyncio", lifespan="on")
 
 @pytest.fixture
 def server():
@@ -23,6 +23,9 @@ def server():
     yield
     proc.kill()
 
+
+def get_temp_name(name):
+    return datetime.today().strftime('%Y-%m-%d-%H:%M:%S:%mm') + name    
 
 ##################
 #####  GET  ######
@@ -37,18 +40,23 @@ def test_plant_get():
 
 # Get certain plant
 def test_plant_get_certain():
-    temp_plant_name = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
-
-    data = {'common_name': temp_plant_name, 'latin_name': temp_plant_name}
+    plant_name = get_temp_name("test_plant_get_certain")
+    data = {'latin_name': plant_name, 
+            'common_name': ['commonname1', 'commonname420'],
+            'metadata': {'bra':'te', 'te':'bra'}}
     response = requests.post(base_url + "/plant", json=data)
     assert response.status_code == 200
+    
 
-    response = requests.get(base_url + "/plant/" + temp_plant_name)
+    response = requests.get(base_url + "/plant/" + plant_name)
     response_json = response.json()
+    print(response_json)
     assert response.status_code == 200
-    assert response_json["common_name"] == temp_plant_name
-    assert response_json['latin_name'] == temp_plant_name
-    assert response_json['metadata'] == None
+    assert response_json['latin_name'] == plant_name
+    assert response_json['common_name'][0] == 'commonname1'
+    assert response_json['common_name'][1] == 'commonname420'
+    assert response_json['metadata']['bra'] == 'te'
+    assert response_json['metadata']['te'] == 'bra'
 
 
 
@@ -58,48 +66,41 @@ def test_plant_get_certain():
 
 # Try to create a duplicate
 def test_plant_post_duplicate():
-    temp_plant_name = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
-
-    data = {'common_name': temp_plant_name, 'latin_name': temp_plant_name}
+    plant_name = get_temp_name("test_plant_post_duplicate")
+    data = {'latin_name': plant_name, 
+            'common_name': ['commonname1', 'commonname420'],
+            'metadata': {'bra':'te', 'te':'bra'}}
     response = requests.post(base_url + "/plant", json=data)
-    print(response.json())
     assert response.status_code == 200
 
-    data = {'common_name': temp_plant_name, 'latin_name': temp_plant_name}
+
+    data = {'latin_name': plant_name}
     response = requests.post(base_url + "/plant", json=data)
 
     assert response.status_code == 422
-
-
-# Missing common_name parameter
-def test_plant_post_missing_common_name():
-    data = {'latin_name': 'gucci'}
-    response = requests.post(base_url + "/plant", json=data)
-
-    response_json = response.json()
-    assert response.status_code == 422
-    assert response_json['detail'][0]['loc'][1] == 'common_name'
    
 
 # Missing latin_name parameter
 def test_plant_post_missing_latin_name():
-    data = {'common_name': 'gucci'}
+    data = {'common_name': ['commonname1', 'commonname420'],
+            'metadata': {'bra':'te', 'te':'bra'}}
     response = requests.post(base_url + "/plant", json=data)
 
     response_json = response.json()
+    print(response_json)
     assert response.status_code == 422
     assert response_json['detail'][0]['loc'][1] == 'latin_name'
 
 
 # Missing both parameters
-def test_plant_post_missing_latin_name():
+def test_plant_post_empty_param():
     data = ' '
     response = requests.post(base_url + "/plant", json=data)
 
     response_json = response.json()
+    print(response_json)
     assert response.status_code == 422
-    assert response_json['detail'][0]['loc'][1] == 'common_name'
-    assert response_json['detail'][1]['loc'][1] == 'latin_name'
+    assert response_json['detail'][0]['loc'][1] == 'latin_name'
 
 
 # Non Json body
@@ -125,18 +126,43 @@ def test_plant_get_non_existing():
 #####  PUT  ######
 ##################
 
-# Try to create a duplicate
+# Update data of a plant
 def test_put_plant():
-    temp_plant_name = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+    plant_name = get_temp_name("test_put_plant")
 
-    data = {'common_name': temp_plant_name, 'latin_name': temp_plant_name}
+    common_name1 = 'common_name1'
+    common_name2 = 'common_name420'
+    meta1_key = 'kekekekekekeke'
+    meta2_key = 'tektje#$Qkwjk'
+    meta1_value = "fkjdslfskdflj"
+    meta2_value = "1240912iwejlfkjw"
+
+    data = {'latin_name': plant_name, 
+            'common_name': [common_name1, common_name2],
+            'metadata': {meta1_key: meta1_value, meta2_key: meta2_value}}
+
     response = requests.post(base_url + "/plant", json=data)
+    response_json = response.json()
     assert response.status_code == 200
+    assert response_json['latin_name'] == plant_name
+    assert response_json['common_name'][0] == common_name1
+    assert response_json['common_name'][1] == common_name2
+    assert response_json['metadata'][meta1_key] == meta1_value
+    assert response_json['metadata'][meta2_key] == meta2_value
 
 
+    meta1_value = 'value3 value2 value1'
+    meta2_value = 'value2 value2 value2'
+    #common_name1 = 'krkrkrkrrkrkrkrkrkrkrkrkrkrkrk'
 
+    data = {'common_name': [common_name1, common_name2],
+            'metadata': {meta1_key: meta1_value, meta2_key: meta2_value}}
+    response = requests.put(base_url + "/plant/" + plant_name, json=data)
+    response_json = response.json()
 
-    data = {'common_name': temp_plant_name, 'latin_name': temp_plant_name}
-    response = requests.post(base_url + "/plant", json=data)
-
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert response_json['latin_name'] == plant_name
+    assert response_json['common_name'][0] == common_name1
+    assert response_json['common_name'][1] == common_name2
+    assert response_json['metadata'][meta1_key] == meta1_value
+    assert response_json['metadata'][meta2_key] == meta2_value
