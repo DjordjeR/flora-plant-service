@@ -44,5 +44,6 @@ async def update_plant(
 ) -> PlantOut_Pydantic:
     plant_obj = await plant.Plant.get(latin_name=plant_name)
     plant_obj.metadata = plant_in.metadata
-    await plant_obj.save(update_fields=["metadata"])
+    plant_obj.common_name = plant_in.common_name
+    await plant_obj.save(update_fields=["metadata", "common_name"])
     return await PlantOut_Pydantic.from_tortoise_orm(plant_obj)
