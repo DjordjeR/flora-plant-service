@@ -14,8 +14,3 @@ class JobTypeEnum(str, Enum):
 
 ScrapedPlant_Pydantic = pydantic_model_creator(ScrapedPlant, exclude=("id",))
 ScrapedJob_Pydantic = pydantic_model_creator(ScrapeJob)
-
-# TODO: I have not idea what job result will be
-class JobResult(BaseModel):
-    result: str
-    plant_info: str
