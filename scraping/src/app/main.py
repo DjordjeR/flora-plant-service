@@ -62,11 +62,15 @@ def _execute_spider_in_process(q):
     plants.extend(plants_3)
     q.put(plants)
 
+once = True
 async def run_spider(job_id, search_query):
+    global once
     try:
         # check if we can match any plants in db already with our fuzzy matching, if matches = 0, then scrape again
-        all_plants = await ScrapedPlant.all()
+        # TODO: add timeout in db when we invalidate all entries
         matched_plants = set()
+        '''
+        all_plants = await ScrapedPlant.all()
         for e in all_plants:
             ratios = [fuzz.token_set_ratio(cn, search_query) for cn in e.common_names]
             ratios.append(fuzz.token_set_ratio(e.latin_name, search_query))
@@ -84,6 +88,7 @@ async def run_spider(job_id, search_query):
             await related_job.save()
             print('Job done! Found in DB')
             return
+        '''
 
         plants = []
         q = Queue() # may god help you 
@@ -97,7 +102,7 @@ async def run_spider(job_id, search_query):
         for e in plants:
             ln = e.get('latin_name', '')
             del e['latin_name']
-            res, _ = await ScrapedPlant.get_or_create(latin_name=ln, defaults=e)
+            res,_ = await ScrapedPlant.update_or_create(latin_name=ln, defaults=e)
             ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
             ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
             max_ratio = max(ratios)
