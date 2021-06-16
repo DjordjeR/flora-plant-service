@@ -3,6 +3,7 @@
 # Test when the search service is not available
 
 cd ..
+sed -i 's/AUTH_ON=true/AUTH_ON=false/g' ../docker/.env.docker
 
 docker-compose up --build -d  
 sleep 10s # to let some time for the container initialisation
