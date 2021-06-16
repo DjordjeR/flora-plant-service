@@ -12,3 +12,7 @@ Also the tests may run a little slow due to the setup of the docker containers a
 * test_search.sh - test the search service and available results
 * test_no_search.sh - will stop the search service and test the available search feature and other requests
 
+
+***Base test with authenthication -> set AUTH_ON=true***
+
+* test_AUTH_ON.sh - same as test_base.sh but with AUTH_ON set to true in .env
