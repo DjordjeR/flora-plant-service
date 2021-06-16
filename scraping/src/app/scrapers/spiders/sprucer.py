@@ -20,7 +20,7 @@ class SprucerSpider(scrapy.Spider):
         self.log(len(data['alphabetList']['glossaryItems']))
         self.log('*'*100)
 
-        for e in data['alphabetList']['glossaryItems'][:5]: #TODO: limit for live demo
+        for e in data['alphabetList']['glossaryItems']:
             yield scrapy.Request(e['url'], callback=self.plant_parse)
 
     def plant_parse(self, response):
