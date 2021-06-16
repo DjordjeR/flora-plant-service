@@ -53,8 +53,8 @@ def _execute_spider_in_process(q):
     plants_2 = []
     plants_3 = []
     # define which crawlers to run
-    #runner.crawl(BushcareSpider, plants=plants)
-    #runner.crawl(MidwestHerbariaSpider, plants=plants_2)
+    runner.crawl(BushcareSpider, plants=plants)
+    runner.crawl(MidwestHerbariaSpider, plants=plants_2)
     runner.crawl(SprucerSpider, plants=plants_3)
     runner.start()
     # add to one big list
