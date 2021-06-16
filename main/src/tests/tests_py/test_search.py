@@ -23,9 +23,9 @@ def test_random_search():
   assert len(response_json[hits_key]) == 0
 
 
-# Search daisy and wait some time to results to appear
-def test_daisy():
-  search = 'daisy'
+# Search random plant and wait some time for results to appear
+def test_plant():
+  search = 'Polygonella polygama'
   params = {'q': search, 'limit': 20, 'offset': 0}
   response = requests.get(base_url + "/search", params=params)
   assert response.status_code == 200
@@ -34,8 +34,8 @@ def test_daisy():
   print(response_json)
   assert len(response_json[hits_key]) == 0
 
-  # now wait 20s to results appear
-  time.sleep(20)
+  # now wait 40s to results appear
+  time.sleep(40)
 
   response = requests.get(base_url + "/search", params=params)
   assert response.status_code == 200

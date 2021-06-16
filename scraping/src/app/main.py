@@ -55,7 +55,7 @@ def _execute_spider_in_process(q):
     # define which crawlers to run
     runner.crawl(BushcareSpider, plants=plants)
     runner.crawl(MidwestHerbariaSpider, plants=plants_2)
-    runner.crawl(SprucerSpider, plants=plants_3) #This one takes too long, lets comment it out
+    #runner.crawl(SprucerSpider, plants=plants_3) #TODO: This one takes too long, lets comment it out
     runner.start()
     # add to one big list
     plants.extend(plants_2)
