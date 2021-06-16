@@ -2,7 +2,7 @@
 
 ## Run
 
-**Before running the tests start the main service**
+**Before running the tests, start the main service**
 
 Directory /tests_py contains all tests for requests, everything else is started and regulated with the provided scripts.
 
