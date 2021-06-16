@@ -30,15 +30,14 @@ async def search(
     }
     try:
         ret = msearch.search(q, opt_params)
-
+        
         if ret.get("nbHits", 1) == 0:
             print("NO hits for this")
-            if await check_if_job_exists(q):
-                return SearchResult(**ret)
-            else:
+            if not await check_if_job_exists(q):
                 background_tasks.add_task(scrape_for_plant, q)
+        ret = msearch.search(q, opt_params)
         return SearchResult(**ret)
-    except Exception:
+    except Exception as e:
         await check_if_job_exists(q)
         background_tasks.add_task(scrape_for_plant, q)
         return SearchResult(hits=[], offset=offset, limit=limit, nbHits=0, query=q)

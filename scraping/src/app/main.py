@@ -53,23 +53,23 @@ def _execute_spider_in_process(q):
     plants_2 = []
     plants_3 = []
     # define which crawlers to run
-    #runner.crawl(BushcareSpider, plants=plants)
-    #runner.crawl(MidwestHerbariaSpider, plants=plants_2)
-    runner.crawl(SprucerSpider, plants=plants_3)
+    runner.crawl(BushcareSpider, plants=plants)
+    runner.crawl(MidwestHerbariaSpider, plants=plants_2)
+    #runner.crawl(SprucerSpider, plants=plants_3) #TODO: This one takes too long, lets comment it out
     runner.start()
     # add to one big list
     plants.extend(plants_2)
     plants.extend(plants_3)
     q.put(plants)
 
-once = True
+
 async def run_spider(job_id, search_query):
     global once
     try:
         # check if we can match any plants in db already with our fuzzy matching, if matches = 0, then scrape again
         # TODO: add timeout in db when we invalidate all entries
         matched_plants = set()
-        '''
+        
         all_plants = await ScrapedPlant.all()
         for e in all_plants:
             ratios = [fuzz.token_set_ratio(cn, search_query) for cn in e.common_names]
@@ -88,7 +88,6 @@ async def run_spider(job_id, search_query):
             await related_job.save()
             print('Job done! Found in DB')
             return
-        '''
 
         plants = []
         q = Queue() # may god help you 
@@ -102,9 +101,6 @@ async def run_spider(job_id, search_query):
         for e in plants:
             ln = e.get('latin_name', '')
             del e['latin_name']
-            print("ADDING")
-            print(e)
-            print('o'*100)
             res,_ = await ScrapedPlant.update_or_create(latin_name=ln, defaults=e)
             ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
             ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
