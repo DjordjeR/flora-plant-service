@@ -20,7 +20,7 @@ class SprucerSpider(scrapy.Spider):
         self.log(len(data['alphabetList']['glossaryItems']))
         self.log('*'*100)
 
-        for e in data['alphabetList']['glossaryItems'][2:5]: #TODO: limited bcs takes too long, find distributed parsing way
+        for e in data['alphabetList']['glossaryItems'][::10]: #TODO: limited bcs takes too long, find distributed parsing way
             yield scrapy.Request(e['url'], callback=self.plant_parse)
 
     def plant_parse(self, response):
