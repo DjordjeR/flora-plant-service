@@ -64,5 +64,5 @@ async def create_plant(plant_in: plant.PlantIn_Pydantic):
 )
 async def update_plant(latin_name: str, plant_in: plant.Plant_Update_Pydantic):
     p = await plant.update_plant(latin_name, plant_in)
-    await search.update_or_add_plant(p)
+    search.update_or_add_plant(p)
     return p
