@@ -6,6 +6,7 @@ from fastapi.param_functions import Depends, Header
 from fastapi.routing import APIRouter
 from fastapi.security.base import SecurityBase
 from fastapi.security.http import HTTPAuthorizationCredentials
+from keycloak.exceptions import KeycloakGetError
 from keycloak.keycloak_admin import KeycloakAdmin
 from keycloak.keycloak_openid import KeycloakOpenID
 from pydantic.main import BaseModel
@@ -132,6 +133,10 @@ def auth_token_refresh(rr: RefreshRequest):
     responses={401: {"model": user.UserKeycloackDetail}},
 )
 def auth_user_register(user_in: user.UserIn):
+    __users = _get_keycloak_admin().get_users({"username": user_in.username})
+    if len(__users):
+        raise HTTPException(status_code=401, detail="User already exists.")
+
     try:
         new_user = _get_keycloak_admin().create_user(
             {

@@ -45,7 +45,7 @@ runner = CrawlerProcess(settings={
         'BOT_NAME': 'floraSpider',
         'CONCURRENT_REQUESTS_PER_DOMAIN': 16,
         'COOKIES_ENABLED': False,
-        'LOG_LEVEL': 'ERROR'
+        #'LOG_LEVEL': 'ERROR'
     })
 
 def _execute_spider_in_process(q):
@@ -102,6 +102,9 @@ async def run_spider(job_id, search_query):
         for e in plants:
             ln = e.get('latin_name', '')
             del e['latin_name']
+            print("ADDING")
+            print(e)
+            print('o'*100)
             res,_ = await ScrapedPlant.update_or_create(latin_name=ln, defaults=e)
             ratios = [fuzz.token_set_ratio(cn, search_query) for cn in res.common_names]
             ratios.append(fuzz.token_set_ratio(res.latin_name, search_query))
