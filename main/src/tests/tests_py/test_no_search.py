@@ -1,16 +1,32 @@
+import time
 import requests
 from datetime import datetime
-
 
 base_url = "http://127.0.0.1:8080"
 
 def get_temp_name(name):
     return datetime.today().strftime('%Y-%m-%d-%H:%M:%S:%mm') + name    
 
+hits_key = 'hits'
 
-####################################
-###########  PLANT  ################
-####################################
+
+# This should fail as no search service is running
+def test_no_search():
+    search = 'acacia'
+    params = {'q': search, 'limit': 20, 'offset': 0}
+    response = requests.get(base_url + "/search", params=params)
+    assert response.status_code == 200
+
+    response_json = response.json()
+    print(response_json)
+    assert len(response_json[hits_key]) == 0
+
+    # now wait 20s to results appear
+    time.sleep(20)
+    
+    response_json = response.json()
+    print(response_json)
+    assert len(response_json[hits_key]) == 0
 
 
 ##################
@@ -98,61 +114,6 @@ def test_plant_get_non_existing():
 
     response_json = response.json()
     assert response_json["detail"] == 'Object does not exist'
-
-
-
-##################
-#####  PUT  
-
-# Update data of a plant
-def test_put_plant():
-    plant_name = get_temp_name("test_put_plant")
-
-    common_name1 = 'common_name1'
-    common_name2 = 'common_name420'
-    meta1_key = 'kekekekekekeke'
-    meta2_key = 'tektje#$Qkwjk'
-    meta1_value = "fkjdslfskdflj"
-    meta2_value = "1240912iwejlfkjw"
-
-    # create
-
-    data = {'latin_name': plant_name, 
-            'common_name': [common_name1, common_name2],
-            'metadata': {meta1_key: meta1_value, meta2_key: meta2_value}}
-
-    response = requests.post(base_url + "/plant", json=data)
-    assert response.status_code == 200
-
-    response_json = response.json()
-    assert response_json['latin_name'] == plant_name
-    assert response_json['common_name'][0] == common_name1
-    assert response_json['common_name'][1] == common_name2
-    assert response_json['metadata'][meta1_key] == meta1_value
-    assert response_json['metadata'][meta2_key] == meta2_value
-
-    # put
-
-    meta1_value = 'value3 value2 value1'
-    meta2_value = 'value2 value2 value2'
-    common_name1 = 'krkrkrkrrkrkrkrkrkrkrkrkrkrkrk'
-
-    data = {'common_name': [common_name1, common_name2],
-            'metadata': {meta1_key: meta1_value, meta2_key: meta2_value}}
-    response = requests.put(base_url + "/plant/" + plant_name, json=data)
-    assert response.status_code == 200
-
-    response_json = response.json()
-    print(response_json)
-
-    assert response_json['latin_name'] == plant_name
-    assert response_json['common_name'][0] == common_name1
-    assert response_json['common_name'][1] == common_name2
-    assert response_json['metadata'][meta1_key] == meta1_value
-    assert response_json['metadata'][meta2_key] == meta2_value
-
-
-
 
 ####################################
 ###########  AUTH  ################

@@ -6,7 +6,8 @@
 cd ..
 
 docker-compose up --build -d 
-docker container stop docker_keycloak_1 
+sleep 10s # to let some time for the container initialisation
+docker container stop flora-plant-service_keycloak_1 
+sleep 2s
 pytest tests/tests_py/test_no_auth.py
-docker container stop docker_keycloak_1
 docker-compose down -v

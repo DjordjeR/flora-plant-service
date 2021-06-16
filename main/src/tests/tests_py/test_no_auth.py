@@ -1,61 +1,11 @@
-from requests.api import get
 import uvicorn
 import pytest
 import requests
 
-from app.main import get_application
-from multiprocessing import Process
 from datetime import datetime
 
 
-app = get_application()
-base_url = "http://127.0.0.1:8000"
-
-
-
-# Borrowed from https://stackoverflow.com/questions/57412825/how-to-start-a-uvicorn-fastapi-in-background-when-testing-with-pytest
-def run_server():
-    uvicorn.run(app, port=8000, loop="asyncio", lifespan="on")
-
-@pytest.fixture
-def server():
-    proc = Process(target=run_server, args=(), daemon=True)
-    proc.start() 
-    yield
-    proc.kill()
-
-
-def get_temp_name(name):
-    return datetime.today().strftime('%Y-%m-%d-%H:%M:%S:%mm') + name    
-
-
-
-from requests.api import get
-import uvicorn
-import pytest
-import requests
-import time
-
-from app.main import get_application
-from multiprocessing import Process
-from datetime import datetime
-
-
-app = get_application()
-base_url = "http://127.0.0.1:8000"
-
-
-
-# Borrowed from https://stackoverflow.com/questions/57412825/how-to-start-a-uvicorn-fastapi-in-background-when-testing-with-pytest
-def run_server():
-    uvicorn.run(app, port=8000, loop="asyncio", lifespan="on")
-
-@pytest.fixture
-def server():
-    proc = Process(target=run_server, args=(), daemon=True)
-    proc.start() 
-    yield
-    proc.kill()
+base_url = "http://127.0.0.1:8080"
 
 
 def get_temp_name(name):
@@ -144,8 +94,6 @@ def test_plant_post_non_json_body():
     response = requests.post(base_url + "/plant", data="brate")
     assert response.status_code == 422
 
-    response_json = response.json()
-    assert response_json['detail'][0]['type'] == 'value_error.jsondecode'
 
 
 # Get nonexisting plant
@@ -224,11 +172,11 @@ access_token_key = 'access_token'
 detail_key = 'detail'
 
 
-def get_temp_user():
-    username = get_temp_name('username')
-    first_name = get_temp_name('fistName')
-    last_name = get_temp_name('lastName')
-    email = get_temp_name('email') + "@gmail.com"
+def get_temp_user(id):
+    username = get_temp_name('username') + id
+    first_name = get_temp_name('fistName') + id
+    last_name = get_temp_name('lastName') + id
+    email = get_temp_name('email') + id + "@gmail.com"
     password = "password123" # damn secure
 
     data = {username_key: username, 
@@ -241,24 +189,9 @@ def get_temp_user():
     return data
 
 
-def check_error_response(response_json):
-    assert response_json[detail_key] == "Undown error"
-
-
-# Get token
-def test_auth_token():
-
-    # register 
-    data = get_temp_user()
-
-    response = requests.post(base_url + "/auth/register", json=data)
-    assert response.status_code != 200
-
-
-
 # Refresh token
 def test_auth_refresh():
-    data = get_temp_user()
+    data = get_temp_user('0')
 
     response = requests.post(base_url + "/auth/register", json=data)
     assert response.status_code != 200
@@ -267,8 +200,8 @@ def test_auth_refresh():
 
 # Register
 def test_auth_register():
-    data = get_temp_user()
+    data = get_temp_user('1')
 
     response = requests.post(base_url + "/auth/register", json=data)
-    assert response.status_code == 500
+    assert response.status_code != 200
     

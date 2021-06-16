@@ -2,9 +2,10 @@
 
 ## Run
 
-**Before running the tests, start the main service**
+***Be sure to set the AUTH_ON variable in the .env file to FALSE!!!***
 
 Directory /tests_py contains all tests for requests, everything else is started and regulated with the provided scripts.
+Also the tests may run a little slow due to the setup of the docker containers and wait for initialisation times.
 
 * test_base.sh - tests every request in a scenario where every service should be working (no search tests included here)
 * test_no_auth.sh - will stop the keycloak service and test the authentication requests
